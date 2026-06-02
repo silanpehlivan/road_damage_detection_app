@@ -1,413 +1,402 @@
-# Telefon Kamerasıyla Yol Bozukluğu ve Çukur Tespiti
+# Road Damage AI - Yol Bozukluğu ve Çukur Tespiti
 
-Bu proje, telefon kamerası veya galeri üzerinden alınan yol görüntülerinde yol yüzeyi hasarlarını derin öğrenme yöntemleriyle sınıflandırmayı ve elde edilen sonucu mobil uygulama üzerinden kullanıcıya göstermeyi amaçlayan görüntü işleme tabanlı bir çalışmadır. Projede **RDD2022** veri seti kullanılmış, YOLO formatındaki anotasyonlardan hasar bölgeleri kırpılmış ve dört ana yol hasarı sınıfı için sınıflandırma modelleri eğitilmiştir.
+**Road Damage AI**, yol yüzeylerinde oluşan hasarları derin öğrenme modeli ile sınıflandıran ve mobil uygulama üzerinden kullanıcı/admin akışı sunan bir görüntü işleme projesidir. Projede kullanıcılar kamera veya galeri üzerinden yol görüntüsü seçerek analiz başlatabilir. Sistem, eğitilmiş yapay zekâ modeli ile hasar türünü ve güven skorunu hesaplar. Admin panelinde ise gelen yol sorunları listelenir ve durumları **İnceleniyor**, **Çözüldü** veya **Çözülemedi** olarak güncellenebilir.
 
-Çalışmada **Basic CNN**, **MobileNetV2** ve **EfficientNetB0** modelleri Google Colab ortamında eğitilmiş; modellerin performansları **5-Fold Cross Validation** yöntemiyle karşılaştırılmıştır. Elde edilen model çıktıları, grafikler, confusion matrix sonuçları ve başarı tabloları proje dosyaları içinde saklanmıştır.
-
----
-
-## Proje Bilgileri
-
-| Alan | Açıklama |
-|---|---|
-| Proje adı | Telefon Kamerasıyla Yol Bozukluğu ve Çukur Tespiti |
-| Proje türü | Görüntü işleme ve derin öğrenme tabanlı sınıflandırma |
-| Veri seti | Road Damage Dataset 2022 (RDD2022) |
-| Eğitim ortamı | Google Colab |
-| Kullanılan modeller | Basic CNN, MobileNetV2, EfficientNetB0 |
-| Değerlendirme yöntemi | 5-Fold Cross Validation |
-| Mobil arayüz | React Native / Expo |
-| API yaklaşımı | FastAPI tabanlı tahmin servisi |
-| Geliştiriciler | Semanur YILDIRIM, Şilan PEHLİVAN |
+Bu proje, derin öğrenme dersi kapsamında hazırlanmıştır. Model eğitimi Google Colab ortamında yapılmış, uygulama tarafında FastAPI backend ve React Native / Expo mobil arayüz geliştirilmiştir.
 
 ---
 
-## Projenin Amacı
+## Proje Özeti
 
-Yol yüzeylerinde oluşan çatlak, çukur ve bozulmalar trafik güvenliği, sürüş konforu, bakım maliyetleri ve şehir altyapısı açısından önemli bir problemdir. Geleneksel yol kontrol süreçleri çoğunlukla manuel inceleme gerektirdiği için zaman alıcı ve maliyetlidir. Bu projede, yol görüntülerinden hasar türünü otomatik olarak belirleyen bir derin öğrenme modeli geliştirilerek bu sürecin daha hızlı, düşük maliyetli ve mobil kullanıma uygun hale getirilmesi hedeflenmiştir.
+Projenin temel amacı, telefon kamerası veya galeriden alınan yol görüntülerini analiz ederek yol hasarı türünü tespit etmektir. Çalışmada RDD2022 veri setinden elde edilen yol hasarı görüntüleri kullanılmıştır. Veri setindeki YOLO anotasyonlarından hasar bölgeleri kırpılmış ve bu kırpılmış görüntüler sınıflandırma modelleriyle eğitilmiştir.
 
-Projenin temel hedefleri şunlardır:
+Projede dört temel yol hasarı sınıfı kullanılmıştır:
 
-- RDD2022 veri setinden yol hasarı görüntülerini hazırlamak.
-- YOLO anotasyonlarından sınıflandırma için kırpılmış hasar görüntüleri üretmek.
-- Basic CNN, MobileNetV2 ve EfficientNetB0 modellerini aynı deney düzeninde eğitmek.
-- Modelleri 5-Fold Cross Validation ile karşılaştırmak.
-- Accuracy, precision, recall, F1-score ve confusion matrix sonuçlarını raporlamak.
-- En başarılı modeli mobil uygulama ve API akışıyla kullanılabilir hale getirmek.
-- Kullanıcının yol görüntüsü yükleyip hasar türünü görebileceği, admin tarafında ise bildirilen sorunların takip edilebileceği bir sistem tasarlamak.
+| Sınıf Kodu | İngilizce Adı | Türkçe Karşılığı |
+|---|---|---|
+| D00 | Longitudinal Crack | Boyuna çatlak |
+| D10 | Transverse Crack | Enine çatlak |
+| D20 | Alligator Crack | Timsah çatlağı |
+| D40 | Pothole | Çukur |
 
----
+Model karşılaştırması için üç farklı mimari denenmiştir:
 
-## Kullanılan Hasar Sınıfları
+- Basic CNN
+- MobileNetV2
+- EfficientNetB0
 
-Projede RDD2022 veri setindeki dört ana hasar sınıfı kullanılmıştır.
-
-| Sınıf kodu | İngilizce ad | Türkçe karşılık | Açıklama |
-|---|---|---|---|
-| D00 | Longitudinal Crack | Boyuna çatlak | Yol doğrultusu boyunca ilerleyen çatlaklar |
-| D10 | Transverse Crack | Enine çatlak | Yol doğrultusuna dik veya yatay çatlaklar |
-| D20 | Alligator Crack | Timsah çatlağı | Ağ biçiminde, çoklu ve parçalı çatlaklar |
-| D40 | Pothole | Çukur | Yol yüzeyindeki çukur, oyuk veya derin bozulmalar |
+5-Fold Cross Validation sonucunda en başarılı model EfficientNetB0 olmuştur. Bu nedenle backend tarafında tahmin işlemleri için `road_damage_efficientnetb0_best.keras` modeli kullanılmıştır.
 
 ---
 
-## Veri Seti ve Veri Hazırlama
+## Kullanılan Teknolojiler
 
-Projede kullanılan ham veri seti **RDD2022** veri setidir. Ham veri seti boyut olarak büyük olduğu için bu proje paketine doğrudan dahil edilmemiştir. Ham veri, gerektiğinde RDD2022 kaynağından tekrar indirilebilir.
+### Model Eğitimi
 
-Veri hazırlama sürecinde şu adımlar uygulanmıştır:
+- Google Colab
+- Python
+- TensorFlow / Keras
+- NumPy
+- Pandas
+- Matplotlib
+- Scikit-learn
+- OpenCV
 
-1. RDD2022 veri setindeki görüntü ve YOLO formatındaki etiket dosyaları okunmuştur.
-2. D00, D10, D20 ve D40 dışındaki sınıflar kapsam dışı bırakılmıştır.
-3. Annotation dosyalarındaki bounding box koordinatları kullanılarak hasarlı bölgeler kırpılmıştır.
-4. Kırpılan görüntüler sınıf klasörlerine göre düzenlenmiştir.
-5. Görüntüler model eğitiminde kullanılmak üzere 224x224 boyutuna getirilmiştir.
-6. Sınıf dengesizliğini azaltmak için dengeli veri tablosu oluşturulmuştur.
-7. Aynı orijinal görüntüden gelen kırpımların farklı foldlara dağılması engellenerek veri sızıntısı riski azaltılmıştır.
+### Backend
 
-### Veri Hazırlama Çıktıları
+- Python
+- FastAPI
+- Uvicorn
+- TensorFlow / Keras
+- Pillow / OpenCV
+- JSON tabanlı rapor kaydı
 
-| Çıktı | Değer |
-|---|---:|
-| Toplam YOLO anotasyonu | 65.712 |
-| D00-D10-D20-D40 kapsamındaki anotasyon | 59.168 |
-| Kırpılmış hasar görüntüsü | 59.167 |
-| Dengelenmiş veri sayısı | 42.464 |
-| Her sınıftaki dengeli örnek sayısı | 10.616 |
-| Kullanılan sınıf sayısı | 4 |
+### Mobil Uygulama
 
-### Dengelenmiş Sınıf Dağılımı
-
-| Sınıf | Örnek sayısı |
-|---|---:|
-| D00 | 10.616 |
-| D10 | 10.616 |
-| D20 | 10.616 |
-| D40 | 10.616 |
+- React Native
+- Expo
+- JavaScript
+- Kamera / galeri üzerinden görsel seçimi
+- Kullanıcı paneli
+- Admin paneli
 
 ---
 
-## 5-Fold Cross Validation Deney Düzeni
+## Proje Dosya Yapısı
 
-Model başarısının yalnızca tek bir eğitim-test ayrımına bağlı kalmaması için projede **5-Fold Cross Validation** uygulanmıştır. Veri beş parçaya ayrılmış, her turda dört parça eğitim ve bir parça doğrulama için kullanılmıştır.
-
-| Fold | Eğitim örneği | Doğrulama örneği | Val D00 | Val D10 | Val D20 | Val D40 |
-|---:|---:|---:|---:|---:|---:|---:|
-| 0 | 33.856 | 8.608 | 2.164 | 2.111 | 2.170 | 2.163 |
-| 1 | 33.985 | 8.479 | 2.122 | 2.188 | 2.051 | 2.118 |
-| 2 | 34.024 | 8.440 | 2.041 | 2.147 | 2.107 | 2.145 |
-| 3 | 33.924 | 8.540 | 2.150 | 2.078 | 2.190 | 2.122 |
-| 4 | 34.067 | 8.397 | 2.139 | 2.092 | 2.098 | 2.068 |
-
----
-
-## Kullanılan Modeller
-
-### 1. Basic CNN
-
-Basic CNN modeli, projede temel karşılaştırma modeli olarak kullanılmıştır. Bu model sıfırdan eğitilen daha basit bir evrişimli sinir ağıdır. Transfer öğrenme tabanlı modellerin katkısını görebilmek için referans model görevi görmüştür.
-
-### 2. MobileNetV2
-
-MobileNetV2, hafif yapısı nedeniyle mobil ve gömülü sistemler için uygun bir transfer öğrenme modelidir. Bu projede telefon kamerası tabanlı kullanım senaryosuna yakın olduğu için karşılaştırmaya dahil edilmiştir.
-
-### 3. EfficientNetB0
-
-EfficientNetB0, parametre-verimlilik dengesi güçlü olan bir transfer öğrenme modelidir. Çalışmada en yüksek genel başarıyı veren model olmuştur. Bu nedenle final model seçimi ve akademik yorumlarda ana model olarak öne çıkarılmıştır.
-
----
-
-## Model Başarı Sonuçları
-
-Aşağıdaki tablo, üç modelin 5-fold ortalama sonuçlarını göstermektedir.
-
-| Model | Accuracy Mean | Accuracy Std | Precision Macro Mean | Recall Macro Mean | F1 Macro Mean | F1 Macro Std |
-|---|---:|---:|---:|---:|---:|---:|
-| Basic CNN | 82.58% | 0.74 | 83.45% | 82.58% | 82.59% | 0.75 |
-| MobileNetV2 | 87.60% | 0.33 | 87.72% | 87.61% | 87.58% | 0.32 |
-| EfficientNetB0 | 88.66% | 0.32 | 88.69% | 88.66% | 88.65% | 0.34 |
-
-### Genel Değerlendirme
-
-- **EfficientNetB0**, 5-fold ortalama accuracy ve macro F1 değerlerinde en başarılı model olmuştur.
-- **MobileNetV2**, EfficientNetB0'a yakın performans göstermiştir ve hafif mimarisi nedeniyle mobil kullanım için güçlü bir alternatiftir.
-- **Basic CNN**, temel model olarak kabul edilebilir sonuçlar üretmiş ancak transfer öğrenme modellerinin gerisinde kalmıştır.
-- Sonuçlar, transfer öğrenme tabanlı modellerin yol hasarı sınıflandırmasında daha güçlü özellik çıkarımı sağladığını göstermektedir.
-
----
-
-## En İyi Model
-
-En iyi fold sonucu EfficientNetB0 modelinde elde edilmiştir.
-
-| Model | Fold | Accuracy | Macro F1 |
-|---|---:|---:|---:|
-| EfficientNetB0 | Fold 3 | 89.00% | 89.06% |
-
-Bu nedenle uygulama tarafında kullanılacak model için öncelikli aday **EfficientNetB0 Fold 3 best model** olarak belirlenmiştir.
-
-Model dosyası:
+Aşağıdaki yapı, projenin VS Code içerisindeki sadeleştirilmiş ve teslim için anlamlı dosya yapısını göstermektedir. `.venv`, `node_modules`, `.expo`, `__pycache__` gibi otomatik oluşan klasörler bu yapıya dahil edilmemiştir.
 
 ```text
-models/efficientnetb0/efficientnetb0_fold3_best.keras
+ROAD_DAMAGE_DETECTION_APP/
+├── backend/
+│   ├── app/
+│   │   ├── data/
+│   │   │   └── reports.json
+│   │   ├── model/
+│   │   │   ├── class_labels.json
+│   │   │   ├── model_info.json
+│   │   │   └── road_damage_efficientnetb0_best.keras
+│   │   ├── routes/
+│   │   │   ├── __init__.py
+│   │   │   ├── predict_routes.py
+│   │   │   └── report_routes.py
+│   │   ├── services/
+│   │   │   ├── __init__.py
+│   │   │   ├── prediction_service.py
+│   │   │   └── report_service.py
+│   │   ├── uploads/
+│   │   │   └── .gitkeep
+│   │   ├── utils/
+│   │   │   ├── __init__.py
+│   │   │   └── image_utils.py
+│   │   ├── __init__.py
+│   │   └── main.py
+│   ├── requirements.txt
+│   └── README.md
+│
+├── mobile/
+│   ├── assets/
+│   ├── App.js
+│   ├── app.json
+│   ├── eas.json
+│   ├── index.js
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── LICENSE
+│   ├── AGENTS.md
+│   ├── CLAUDE.md
+│   └── README.md
+│
+└── README.md
 ```
 
 ---
 
-## Proje Klasör Yapısı
+## Backend Yapısı
 
-```text
-Yol_Bozuklugu_Cukur_Tespiti_TUM_PROJE_DOSYALARI/
-│
-├── dataset/
-│   └── processed/
-│       ├── annotations_all_yolo.csv
-│       ├── annotations_4class.csv
-│       ├── cropped_damage_metadata.csv
-│       ├── cropped_damage_metadata_balanced.csv
-│       └── folds/
-│           ├── cropped_damage_balanced_5fold.csv
-│           ├── fold_0_train.csv
-│           ├── fold_0_val.csv
-│           ├── fold_1_train.csv
-│           ├── fold_1_val.csv
-│           ├── fold_2_train.csv
-│           ├── fold_2_val.csv
-│           ├── fold_3_train.csv
-│           ├── fold_3_val.csv
-│           ├── fold_4_train.csv
-│           ├── fold_4_val.csv
-│           └── fold_train_val_summary.csv
-│
-├── figures/
-│   ├── cropped_class_distribution.png
-│   ├── balanced_cropped_class_distribution.png
-│   ├── balanced_cropped_samples_by_class.png
-│   ├── basic_cnn/
-│   ├── mobilenetv2/
-│   ├── efficientnetb0/
-│   └── final_comparison/
-│
-├── models/
-│   ├── basic_cnn/
-│   ├── mobilenetv2/
-│   └── efficientnetb0/
-│
-├── outputs/
-│   ├── basic_cnn/
-│   ├── mobilenetv2/
-│   ├── efficientnetb0/
-│   └── final_comparison/
-│
-├── reports/
-├── export_for_vscode/
-└── PAKET_ICERIGI.txt
-```
+Backend tarafı FastAPI ile geliştirilmiştir. Backend, mobil uygulamadan gelen görselleri alır, eğitilmiş EfficientNetB0 modeline gönderir ve tahmin sonucunu JSON formatında döndürür. Ayrıca kullanıcı tarafından bildirilen yol sorunlarını `reports.json` dosyasında saklar.
 
----
-
-## Önemli Çıktı Dosyaları
-
-### Veri Hazırlama Dosyaları
+### Önemli Backend Dosyaları
 
 | Dosya | Açıklama |
 |---|---|
-| `dataset/processed/annotations_all_yolo.csv` | Tüm YOLO anotasyonlarının tablo hali |
-| `dataset/processed/annotations_4class.csv` | D00, D10, D20, D40 sınıflarına indirgenmiş anotasyonlar |
-| `dataset/processed/cropped_damage_metadata.csv` | Kırpılmış hasar görüntülerinin metadata tablosu |
-| `dataset/processed/cropped_damage_metadata_balanced.csv` | Dengelenmiş veri tablosu |
-| `dataset/processed/folds/fold_train_val_summary.csv` | Fold bazlı eğitim/doğrulama özetleri |
-
-### Model Dosyaları
-
-| Klasör | Açıklama |
-|---|---|
-| `models/basic_cnn/` | Basic CNN fold bazlı best/last model dosyaları |
-| `models/mobilenetv2/` | MobileNetV2 fold bazlı best/last model dosyaları |
-| `models/efficientnetb0/` | EfficientNetB0 fold bazlı best/last model dosyaları |
-
-### Sonuç Dosyaları
-
-| Dosya | Açıklama |
-|---|---|
-| `outputs/final_comparison/model_comparison_5fold.csv` | Tüm modellerin 5-fold ortalama sonuçları |
-| `outputs/final_comparison/model_comparison_5fold_percent.csv` | Yüzdelik formatta model karşılaştırması |
-| `outputs/*/*_5fold_all_metrics.csv` | Her modelin fold bazlı metrikleri |
-| `outputs/*/*_5fold_summary_mean_std.csv` | Her modelin ortalama ve standart sapma değerleri |
-| `outputs/*/*_confusion_matrix.csv` | Fold bazlı confusion matrix çıktıları |
-| `outputs/*/*_classification_report.txt` | Fold bazlı precision, recall ve F1 raporları |
-| `outputs/*/*_history.csv` | Eğitim sürecindeki accuracy/loss geçmişi |
-
-### Görsel Dosyalar
-
-| Klasör | Açıklama |
-|---|---|
-| `figures/basic_cnn/` | Basic CNN accuracy, loss ve confusion matrix görselleri |
-| `figures/mobilenetv2/` | MobileNetV2 accuracy, loss ve confusion matrix görselleri |
-| `figures/efficientnetb0/` | EfficientNetB0 accuracy, loss, confusion matrix ve örnek tahmin görselleri |
-| `figures/final_comparison/` | Modellerin karşılaştırmalı accuracy ve F1 grafikleri |
+| `backend/app/main.py` | FastAPI uygulamasının ana giriş dosyasıdır. |
+| `backend/app/routes/predict_routes.py` | Görsel tahmini için kullanılan API rotalarını içerir. |
+| `backend/app/routes/report_routes.py` | Yol sorunu kayıtlarını listeleme ve güncelleme rotalarını içerir. |
+| `backend/app/services/prediction_service.py` | Model yükleme ve tahmin işlemlerini yürütür. |
+| `backend/app/services/report_service.py` | Admin panelindeki rapor kayıtlarını yönetir. |
+| `backend/app/utils/image_utils.py` | Görsel ön işleme işlemlerini içerir. |
+| `backend/app/model/road_damage_efficientnetb0_best.keras` | Eğitilmiş derin öğrenme modelidir. |
+| `backend/app/model/class_labels.json` | Modelin sınıf etiketlerini içerir. |
+| `backend/app/model/model_info.json` | Model bilgilerini ve sınıf açıklamalarını içerir. |
+| `backend/app/data/reports.json` | Kullanıcıların gönderdiği yol hasarı kayıtlarını saklar. |
+| `backend/app/uploads/` | Kullanıcı tarafından yüklenen görsellerin tutulduğu klasördür. |
 
 ---
 
-## Google Colab Üzerinde Çalıştırma
+## Mobil Uygulama Yapısı
 
-Bu proje Google Colab ortamında yürütülmüştür. Ham veri seti büyük olduğu için proje paketine dahil edilmemiştir. Colab üzerinde çalıştırmak için genel akış aşağıdaki gibidir.
+Mobil uygulama React Native / Expo ile geliştirilmiştir. Uygulama iki ana panelden oluşur:
 
-### 1. Google Drive Bağlantısı
-
-```python
-from google.colab import drive
-drive.mount('/content/drive')
-```
-
-### 2. Proje Klasörünü Belirleme
-
-```python
-PROJECT_DIR = "/content/drive/MyDrive/Yol_Bozuklugu_Cukur_Tespiti"
-```
-
-### 3. Gerekli Kütüphaneler
-
-```python
-import os
-import cv2
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import tensorflow as tf
-
-from sklearn.model_selection import StratifiedGroupKFold
-from sklearn.metrics import classification_report, confusion_matrix
-from tensorflow.keras.models import load_model
-```
-
-### 4. Eğitilmiş Modeli Yükleme
-
-```python
-model_path = "models/efficientnetb0/efficientnetb0_fold3_best.keras"
-model = load_model(model_path)
-```
-
-### 5. Tahmin Alma Mantığı
-
-```python
-# Örnek akış:
-# 1. Görüntü okunur.
-# 2. 224x224 boyutuna getirilir.
-# 3. Normalize edilir.
-# 4. Model tahmini alınır.
-# 5. En yüksek olasılığa sahip sınıf sonuç olarak döndürülür.
-```
-
----
-
-## Mobil Uygulama Akışı
-
-Mobil uygulama React Native / Expo yaklaşımıyla tasarlanmıştır. Uygulamada kullanıcı ve admin tarafı olmak üzere iki temel akış vardır.
+1. **Kullanıcı Paneli**
+2. **Admin Paneli**
 
 ### Kullanıcı Paneli
 
-Kullanıcı panelinde amaç, kullanıcının telefon kamerası veya galeri üzerinden yol görüntüsü alarak modeli çalıştırmasıdır.
+Kullanıcı panelinde kullanıcı kamera veya galeri üzerinden yol görüntüsü seçebilir. Ardından **Analiz Et** butonu ile görüntü backend tarafına gönderilir. Model, görüntüdeki yol hasarı türünü tahmin eder ve güven skorunu hesaplar.
 
-Temel işlevler:
+Kullanıcı panelinde bulunan temel özellikler:
 
-- Yol görüntüsü seçme veya kamerayla fotoğraf çekme
-- Görüntüyü analiz için API tarafına gönderme
-- Hasar türünü ve güven skorunu görüntüleme
-- Tespit edilen hasarı bildirim olarak sisteme kaydetme
-- Daha önce gönderilen bildirimlerin durumunu takip etme
+- Kamera ile fotoğraf alma
+- Galeriden görsel seçme
+- Seçilen görselin önizlemesini gösterme
+- AI model analizi başlatma
+- Backend API bağlantısı ile tahmin sonucu alma
+- D00, D10, D20 ve D40 hasar sınıflarını destekleme
 
 ### Admin Paneli
 
-Admin panelinde amaç, kullanıcılar tarafından gönderilen yol hasarı bildirimlerini takip etmektir.
+Admin paneli, kullanıcılar tarafından sisteme gönderilen yol sorunlarının takip edilmesi için hazırlanmıştır. Admin, gelen kayıtları görebilir ve her kaydın durumunu değiştirebilir.
 
-Temel işlevler:
+Admin panelinde bulunan temel özellikler:
 
-- Gelen yol hasarı bildirimlerini listeleme
-- Bildirime ait fotoğraf, hasar türü, güven skoru, tarih ve konum bilgisini görüntüleme
-- Bildirim durumunu güncelleme
-- Durum seçenekleri: `İnceleniyor`, `Çözüldü`, `Çözülemedi`
+- Gelen yol sorunlarını listeleme
+- Toplam kayıt sayısını gösterme
+- İncelenen ve çözülen kayıt sayılarını gösterme
+- Her kayıt için hasar türünü ve güven skorunu görüntüleme
+- Kayıt durumunu güncelleme:
+  - İnceleniyor
+  - Çözüldü
+  - Çözülemedi
 
 ---
 
-## API Mantığı
+## Derin Öğrenme Modeli
 
-Modelin mobil uygulama ile kullanılabilmesi için FastAPI tabanlı bir servis yapısı planlanmıştır. Bu yapı, mobil uygulamadan gelen görüntüyü alır, modeli çalıştırır ve tahmin sonucunu JSON formatında döndürür.
+Projede RDD2022 veri seti kullanılarak yol hasarı görüntüleri üzerinde sınıflandırma yapılmıştır. Model eğitimi Google Colab ortamında gerçekleştirilmiştir. Veri setinde yer alan YOLO formatındaki anotasyonlar okunmuş, hasarlı bölgeler kırpılmış ve sınıflandırma modeli için uygun hale getirilmiştir.
 
-Örnek tahmin çıktısı:
+### Kullanılan Modeller
+
+| Model | Açıklama |
+|---|---|
+| Basic CNN | Temel karşılaştırma modeli olarak kullanılmıştır. |
+| MobileNetV2 | Hafif yapısı nedeniyle mobil uygulama senaryosu için değerlendirilmiştir. |
+| EfficientNetB0 | En yüksek başarıyı veren model olarak backend tarafına entegre edilmiştir. |
+
+### Ortalama 5-Fold Sonuçları
+
+| Model | Ortalama Accuracy | Ortalama Macro F1 |
+|---|---:|---:|
+| Basic CNN | 0.8258 | 0.8259 |
+| MobileNetV2 | 0.8760 | 0.8758 |
+| EfficientNetB0 | 0.8866 | 0.8865 |
+
+Sonuçlara göre EfficientNetB0 modeli en yüksek accuracy ve macro F1 değerlerine ulaşmıştır. MobileNetV2 modeli de EfficientNetB0'a yakın performans göstermiştir. Bu nedenle MobileNetV2, daha hafif mimarisi sayesinde mobil cihaz senaryoları için güçlü bir alternatif olarak değerlendirilebilir.
+
+---
+
+## API Kullanımı
+
+Backend çalıştırıldıktan sonra mobil uygulama, API üzerinden tahmin ve rapor işlemlerini gerçekleştirir.
+
+### Tahmin API'si
+
+Görüntü tahmini için kullanılan endpoint:
+
+```text
+POST /api/predict
+```
+
+Bu endpoint, mobil uygulamadan gelen yol görüntüsünü alır ve model tahmin sonucunu döndürür.
+
+Örnek dönüş yapısı:
 
 ```json
 {
-  "predicted_class": "D40",
-  "class_name_tr": "Çukur",
-  "confidence": 0.92,
-  "message": "Yol yüzeyinde çukur tespit edildi."
+  "predicted_class": "D00",
+  "label": "Boyuna çatlak",
+  "confidence": 0.86,
+  "description": "Yol doğrultusu boyunca ilerleyen boyuna çatlak tespit edildi."
 }
 ```
 
-Örnek sınıf eşlemesi:
+### Rapor API'si
 
-```json
-{
-  "D00": "Boyuna çatlak",
-  "D10": "Enine çatlak",
-  "D20": "Timsah çatlağı",
-  "D40": "Çukur"
-}
+Yol sorunu kayıtlarını yönetmek için kullanılan endpointler:
+
+```text
+GET /api/reports
+POST /api/reports
+PATCH /api/reports/{report_id}/status
+```
+
+Bu endpointler ile admin panelinde gelen sorunlar listelenebilir ve durumları güncellenebilir.
+
+---
+
+## Kurulum ve Çalıştırma
+
+### 1. Projeyi İndirme
+
+```bash
+git clone <repo-linki>
+cd ROAD_DAMAGE_DETECTION_APP
+```
+
+Repo bağlantısı kullanılmayacaksa proje klasörü doğrudan VS Code ile açılabilir.
+
+---
+
+## Backend Kurulumu
+
+Backend klasörüne geçilir:
+
+```bash
+cd backend
+```
+
+Sanal ortam oluşturulur:
+
+```bash
+python -m venv .venv
+```
+
+Windows PowerShell üzerinde sanal ortam aktif edilir:
+
+```bash
+.venv\\Scripts\\activate
+```
+
+Gerekli paketler yüklenir:
+
+```bash
+pip install -r requirements.txt
+```
+
+Backend çalıştırılır:
+
+```bash
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+Backend çalıştıktan sonra API aşağıdaki adreste aktif olur:
+
+```text
+http://localhost:8000
+```
+
+Aynı ağdaki fiziksel telefondan test yapılacaksa `localhost` yerine bilgisayarın yerel IP adresi kullanılmalıdır. Örneğin:
+
+```text
+http://196.168.1.24:8080
 ```
 
 ---
 
-## Değerlendirme Metrikleri
+## Mobil Uygulama Kurulumu
 
-Projede model başarısını değerlendirmek için aşağıdaki metrikler kullanılmıştır:
+Yeni bir terminal açılarak mobil klasörüne geçilir:
 
-- **Accuracy:** Doğru sınıflandırılan örneklerin tüm örneklere oranı.
-- **Precision:** Modelin pozitif tahminlerinin ne kadarının doğru olduğunu gösterir.
-- **Recall:** Gerçek pozitif örneklerin ne kadarının doğru yakalandığını gösterir.
-- **Macro F1-score:** Her sınıfın F1 skorunun eşit ağırlıklı ortalamasıdır.
-- **Weighted F1-score:** Sınıf örnek sayıları dikkate alınarak hesaplanan F1 skorudur.
-- **Confusion matrix:** Sınıfların birbirine karışma durumunu gösterir.
+```bash
+cd mobile
+```
 
-Bu çalışmada özellikle **macro F1-score** önemlidir; çünkü çok sınıflı sınıflandırma problemlerinde her sınıfın başarısını dengeli biçimde değerlendirmeye yardımcı olur.
+Paketler yüklenir:
 
----
+```bash
+npm install
+```
 
-## Sonuç Özeti
+Expo uygulaması başlatılır:
 
-Bu projede RDD2022 veri seti kullanılarak D00, D10, D20 ve D40 yol hasarı sınıfları için derin öğrenme tabanlı sınıflandırma yapılmıştır. YOLO formatındaki anotasyonlardan hasarlı bölgeler kırpılmış, veri dengelenmiş ve modeller 5-fold cross validation yöntemiyle değerlendirilmiştir.
+```bash
+npx expo start
+```
 
-Elde edilen sonuçlara göre:
+Fiziksel cihazda test etmek için Expo Go uygulaması kullanılabilir. Android emülatör ile çalıştırmak için:
 
-1. EfficientNetB0 modeli en yüksek genel başarıyı elde etmiştir.
-2. MobileNetV2 modeli daha hafif yapısına rağmen EfficientNetB0'a yakın sonuç vermiştir.
-3. Basic CNN modeli temel karşılaştırma için yeterli olsa da transfer öğrenme modellerinden daha düşük performans göstermiştir.
-4. 5-fold sonuçlarının standart sapma değerleri düşük olduğu için modellerin farklı veri bölmelerinde tutarlı sonuçlar verdiği görülmüştür.
-5. Proje, yalnızca model eğitimiyle sınırlı kalmayıp mobil uygulama ve admin takip sistemiyle gerçek kullanıma yakın bir yapı sunmaktadır.
-
----
-
-## Literatür Bağlantısı
-
-Bu proje, yol hasarı tespiti, yol yüzeyi kalite analizi ve derin öğrenme tabanlı görüntü sınıflandırma çalışmalarına dayanmaktadır. Literatürde YOLO, Faster R-CNN, EfficientDet, MobileNet, EfficientNet ve çeşitli feature fusion yaklaşımları yol hasarı tespitinde sıkça kullanılmaktadır.
-
-Bu çalışmanın literatüre göre öne çıkan yönleri:
-
-- RDD2022 veri setinin dört temel yol hasarı sınıfına odaklanması
-- Basic CNN, MobileNetV2 ve EfficientNetB0 modellerinin aynı 5-fold düzeninde karşılaştırılması
-- Sadece başarı oranı değil, confusion matrix ve F1-score üzerinden sınıf bazlı değerlendirme yapılması
-- Google Colab üzerinde tekrar üretilebilir bir deney akışı kurulması
-- Mobil uygulama ile yol hasarı bildirim senaryosuna bağlanması
+```bash
+npx expo start --android
+```
 
 ---
 
-## Notlar
+## Backend Bağlantı Adresi
 
-- Ham RDD2022 veri seti proje paketine dahil edilmemiştir.
-- Büyük boyutlu model dosyaları `.keras` formatında saklanmıştır.
-- Colab notebook bağlantısı teslim aşamasında README veya rapor içerisine ayrıca eklenmelidir.
-- `models/efficientnetb0/efficientnetb0_fold3_best.keras` dosyası en iyi model adayıdır.
-- Mobil uygulama tarafında modelin çalışması için API tarafında aynı ön işleme adımlarının uygulanması gerekir.
+Mobil uygulama fiziksel telefonda çalıştırılacaksa backend URL'si bilgisayarın yerel IP adresiyle ayarlanmalıdır.
+
+Örnek:
+
+```javascript
+const API_BASE_URL = "http://196.168.1.24:8080";
+```
+
+Android emülatör kullanılacaksa genellikle şu adres tercih edilir:
+
+```javascript
+const API_BASE_URL = "http://10.0.2.2:8000";
+```
+
+Web veya bilgisayar üzerinden testlerde:
+
+```javascript
+const API_BASE_URL = "http://localhost:8000";
+```
+
+---
+
+## Kullanım Akışı
+
+### Kullanıcı Akışı
+
+1. Mobil uygulama açılır.
+2. Kullanıcı paneli seçilir.
+3. Kamera veya galeri üzerinden yol görüntüsü seçilir.
+4. Seçilen görüntü önizleme alanında gösterilir.
+5. **Analiz Et** butonuna basılır.
+6. Görüntü backend API'ye gönderilir.
+7. Model hasar sınıfını ve güven skorunu hesaplar.
+8. Sonuç kullanıcıya gösterilir.
+9. İstenirse sonuç yol sorunu bildirimi olarak kaydedilir.
+
+### Admin Akışı
+
+1. Mobil uygulamada admin sekmesi açılır.
+2. Sisteme gelen yol sorunu kayıtları listelenir.
+3. Her kayıt için hasar türü, güven skoru ve tarih bilgisi görüntülenir.
+4. Admin, kaydın durumunu günceller:
+   - İnceleniyor
+   - Çözüldü
+   - Çözülemedi
+5. Güncellenen durum kayıt dosyasına işlenir.
+
+---
+
+## Mobil Uygulama Arayüzü
+
+Proje arayüzünde kullanıcı ve admin panelleri tamamlanmıştır.
+
+### Kullanıcı Paneli
+
+Kullanıcı panelinde kamera/galeri üzerinden görüntü seçme, önizleme ve analiz başlatma akışı bulunmaktadır.
+
+### Admin Paneli
+
+Admin panelinde gelen yol sorunları, güven skoru ve durum güncelleme butonları yer almaktadır.
+
+---
+
+## Projenin Öne Çıkan Yönleri
+
+- RDD2022 veri seti üzerinde çalışılmıştır.
+- D00, D10, D20 ve D40 olmak üzere dört farklı yol hasarı sınıfı desteklenmiştir.
+- Basic CNN, MobileNetV2 ve EfficientNetB0 modelleri karşılaştırılmıştır.
+- 5-Fold Cross Validation ile daha güvenilir değerlendirme yapılmıştır.
+- EfficientNetB0 modeli backend sistemine entegre edilmiştir.
+- FastAPI ile API tabanlı tahmin servisi oluşturulmuştur.
+- React Native / Expo ile mobil kullanıcı ve admin paneli geliştirilmiştir.
+- Kullanıcıdan gelen yol sorunları admin panelinde takip edilebilir hale getirilmiştir.
+- Proje yalnızca model eğitimiyle sınırlı kalmamış, uçtan uca çalışan bir mobil destekli sisteme dönüştürülmüştür.
 
 ---
 
@@ -418,6 +407,12 @@ Bu çalışmanın literatüre göre öne çıkan yönleri:
 
 ---
 
-## Lisans ve Kullanım
+## Ders ve Proje Bilgisi
 
-Bu çalışma, Derin Öğrenme dersi kapsamında akademik amaçla hazırlanmıştır. Veri seti, kullanılan açık kaynak kütüphaneler ve literatür kaynakları kendi kullanım koşullarına tabidir.
+Bu proje, derin öğrenme dersi kapsamında görüntü işleme ve yol hasarı tespiti alanında hazırlanmıştır. Çalışmada model eğitimi, model karşılaştırması, backend API geliştirme ve mobil arayüz tasarımı bir arada yürütülmüştür.
+
+---
+
+## Lisans
+
+Bu proje eğitim amacıyla geliştirilmiştir. Kullanılan açık kaynak kütüphanelerin kendi lisans koşulları geçerlidir.
