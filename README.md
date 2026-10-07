@@ -1,4 +1,32 @@
-# Road Damage AI - Yol Bozukluğu ve Çukur Tespiti
+<div align="center">
+
+# Road Damage AI
+
+**Mobil destekli yol hasarı sınıflandırma**
+
+![Python](https://img.shields.io/badge/Python-2563eb?style=flat-square)
+![FastAPI](https://img.shields.io/badge/FastAPI-0891b2?style=flat-square)
+![React Native](https://img.shields.io/badge/React%20Native-7c3aed?style=flat-square)
+[![MIT License](https://img.shields.io/badge/License-MIT-16a34a?style=flat-square)](LICENSE)
+
+Yol görüntülerindeki hasar türlerini derin öğrenmeyle sınıflandıran, kullanıcı bildirimlerini yönetici panelinde takip eden mobil destekli proje.
+
+</div>
+
+---
+
+## Öne Çıkanlar
+
+- RDD2022 verileriyle D00, D10, D20 ve D40 sınıfları
+- CNN, MobileNetV2 ve EfficientNetB0 karşılaştırması
+- Kamera/galeri analizi ve bildirim durumlarının yönetimi
+
+## Teknolojiler
+
+Python · FastAPI · React Native · Expo
+
+<details>
+<summary><strong>Kurulum, kullanım ve teknik ayrıntılar</strong></summary>
 
 **Road Damage AI**, yol yüzeylerinde oluşan hasarları derin öğrenme modeli ile sınıflandıran ve mobil uygulama üzerinden kullanıcı/admin akışı sunan bir görüntü işleme projesidir. Projede kullanıcılar kamera veya galeri üzerinden yol görüntüsü seçerek analiz başlatabilir. Sistem, eğitilmiş yapay zekâ modeli ile hasar türünü ve güven skorunu hesaplar. Admin panelinde ise gelen yol sorunları listelenir ve durumları **İnceleniyor**, **Çözüldü** veya **Çözülemedi** olarak güncellenebilir.
 
@@ -400,19 +428,14 @@ Admin panelinde gelen yol sorunları, güven skoru ve durum güncelleme butonlar
 
 ---
 
-## Geliştiriciler
-
-- Semanur YILDIRIM
-- Şilan PEHLİVAN
+</details>
 
 ---
 
-## Ders ve Proje Bilgisi
+<div align="center">
 
-Bu proje, derin öğrenme dersi kapsamında görüntü işleme ve yol hasarı tespiti alanında hazırlanmıştır. Çalışmada model eğitimi, model karşılaştırması, backend API geliştirme ve mobil arayüz tasarımı bir arada yürütülmüştür.
+**© 2026 Semanur YILDIRIM and Şilan PEHLİVAN**
 
----
+Bu proje MIT lisansı kapsamında sunulmaktadır. Kullanım ve dağıtım koşulları: [LICENSE](LICENSE).
 
-## Lisans
-
-Bu proje eğitim amacıyla geliştirilmiştir. Kullanılan açık kaynak kütüphanelerin kendi lisans koşulları geçerlidir.
+</div>
